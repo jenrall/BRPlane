@@ -30,7 +30,6 @@ public final class BRPlane extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-        saveDefaultConfig();
         this.planeManager = new PlaneManager(this);
         this.parachuteManager = new ParachuteManager();
 
