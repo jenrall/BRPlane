@@ -1,0 +1,13 @@
+name: BRPlane
+version: 1.0.0
+main: com.example.brplane.BRPlane
+api-version: '1.21'
+author: You
+description: Battle Royale Plane and Parachute
+depend: [BRCore]
+
+commands:
+  brplane:
+    description: Plane commands
+    usage: /brplane <setroute|jumppoint|start|stop|info>
+    aliases: [bp]
