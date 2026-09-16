@@ -45,7 +45,7 @@ public final class BRPlane extends JavaPlugin {
     public void onDisable() {
         if (planeTask != null) planeTask.cancel();
         if (planeEntity != null) planeEntity.remove();
-        planeManager.save();
+        if (planeManager != null) planeManager.save();
         getLogger().info("BRPlane disabled!");
     }
 
