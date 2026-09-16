@@ -37,7 +37,6 @@ public final class BRPlane extends JavaPlugin {
         getCommand("brplane").setExecutor(new PlaneCommand(this));
         getServer().getPluginManager().registerEvents(new PlaneListener(this), this);
 
-        // تسک چتر
         Bukkit.getScheduler().runTaskTimer(this, this::parachuteTick, 0L, 2L);
 
         getLogger().info("BRPlane enabled!");
@@ -66,34 +65,28 @@ public final class BRPlane extends JavaPlugin {
         Location start = plane.getStartPoint();
         Location end = plane.getEndPoint();
 
-        // اسپاون موجودیت هواپیما
         planeEntity = (ArmorStand) start.getWorld().spawnEntity(start, EntityType.ARMOR_STAND);
         planeEntity.setVisible(false);
         planeEntity.setGravity(false);
         planeEntity.setInvulnerable(true);
-        planeEntity.setCustomName("✈ Battle Royale Plane");
+        planeEntity.setCustomName("✈ BR Plane");
         planeEntity.setCustomNameVisible(true);
         planeEntity.setSmall(false);
 
         currentPlaneLoc = start.clone();
         riders.clear();
 
-        // بازیکنا سوار شن
-        for (UUID id : com.example.brcore.BRCore.getAPI().getPlayers()) {
-            Player p = Bukkit.getPlayer(id);
-            if (p != null) {
-                p.teleport(start);
-                riders.add(p.getUniqueId());
-            }
+        // همه بازیکنای آنلاین سوار شن (ساده: همه بازیکنای آنلاین)
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            p.teleport(start);
+            riders.add(p.getUniqueId());
         }
 
-        // محاسبه direction و سرعت
         Vector dir = end.toVector().subtract(start.toVector()).normalize();
         double speed = plane.getSpeed() * 0.5;
 
         planeTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
-            if (planeEntity == null) return;
-            if (currentPlaneLoc == null) return;
+            if (planeEntity == null || currentPlaneLoc == null) return;
             if (currentPlaneLoc.distance(end) < 2) {
                 stopPlane();
                 return;
@@ -102,16 +95,13 @@ public final class BRPlane extends JavaPlugin {
             currentPlaneLoc.add(dir.clone().multiply(speed));
             planeEntity.teleport(currentPlaneLoc);
 
-            // ذرات دنبال هواپیما
             currentPlaneLoc.getWorld().spawnParticle(Particle.CLOUD, currentPlaneLoc, 3, 0.5, 0.5, 0.5, 0.05);
 
-            // بازیکنا رو نگه‌دار توی هواپیما
             for (UUID id : riders) {
                 Player p = Bukkit.getPlayer(id);
                 if (p != null) p.teleport(currentPlaneLoc.clone().add(0, -1, 0));
             }
 
-            // پرش خودکار
             if (plane.getJumpPoint() != null
                     && currentPlaneLoc.distance(plane.getJumpPoint()) < 3) {
                 Bukkit.broadcast(Component.text("🪂 الان می‌تونی بپری! /brplane jump", NamedTextColor.GOLD));
@@ -138,7 +128,8 @@ public final class BRPlane extends JavaPlugin {
         riders.remove(p.getUniqueId());
         p.teleport(currentPlaneLoc != null ? currentPlaneLoc : p.getLocation());
         parachuteManager.startJump(p);
-        p.sendMessage(Component.text("🪂 پریدی! چتر نجات باز می‌شه...", NamedTextColor.GOLD));
+        parachuteManager.openChute(p); // چتر رو مستقیم باز کن
+        p.sendMessage(Component.text("🪂 پریدی! چتر نجات باز شد!", NamedTextColor.GOLD));
     }
 
     // ============ Parachute tick ============
@@ -148,28 +139,19 @@ public final class BRPlane extends JavaPlugin {
             Player p = Bukkit.getPlayer(id);
             if (p == null) continue;
 
-            // کاهش سرعت افتادن
             if (p.getVelocity().getY() < -0.3) {
                 p.setVelocity(p.getVelocity().setY(-0.3));
             }
 
-            // fall damage صفر
             p.setFallDistance(0);
 
-            // ذرات چتر
             Location loc = p.getLocation().add(0, 2, 0);
             loc.getWorld().spawnParticle(Particle.CLOUD, loc, 5, 0.3, 0.1, 0.3, 0.01);
 
-            // اگه نزدیک زمین شد → فرود
             if (p.isOnGround()) {
                 parachuteManager.endParachute(p);
                 p.sendMessage(Component.text("✅ فرود آمدی!", NamedTextColor.GREEN));
             }
-        }
-
-        // اگه بازیکن موقع پرش بود ولی چتر باز نکرده
-        for (UUID id : new HashSet<>(parachuteManager.getParachuting())) {
-            // handled above
         }
     }
 }
